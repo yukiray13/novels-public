@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chapters</title>
+<style>
+body { font-family: Arial, sans-serif; padding: 20px; }
+h1 { text-align: center; }
+.chapter-list { list-style-type: none; padding: 0; }
+.chapter-list li { margin: 8px 0; }
+a { text-decoration: none; color: darkgreen; font-size: 1.1em; }
+a:hover { text-decoration: underline; }
+.back-link { margin-bottom: 20px; display: inline-block; }
+</style>
+</head>
+<body>
+<a href="index.html" class="back-link">&larr; Back to novels</a>
+<h1 id="novel-title">Loading...</h1>
+<ul id="chapters" class="chapter-list"></ul>
+
+<script>
+function getQueryParam(param) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+}
+
+function extractChapterNumber(title) {
+    const match = title.match(/chapter\s*(\d+)/i);
+    return match ? parseInt(match[1], 10) : Number.MAX_SAFE_INTEGER;
+}
+
+const novelName = getQueryParam('name');
+if (!novelName) {
+    document.getElementById('novel-title').textContent = 'No novel specified.';
+} else {
+    document.getElementById('novel-title').textContent = novelName;
+
+    fetch('novels.json')
+    .then(res => res.json())
+    .then(novels => {
+        const chapters = novels[novelName];
+        if (!chapters) {
+            document.getElementById('chapters').textContent = 'No chapters found.';
+            return;
+        }
+
+        chapters.sort((a, b) => {
+            return extractChapterNumber(a.title) - extractChapterNumber(b.title);
+        });
+
+        const ul = document.getElementById('chapters');
+        chapters.forEach(chap => {
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.href = chap.file;
+            a.textContent = chap.title;
+            a.target = '_blank';
+            li.appendChild(a);
+            ul.appendChild(li);
+        });
+    })
+    .catch(err => {
+        document.getElementById('chapters').textContent = 'Failed to load chapters.';
+        console.error(err);
+    });
+}
+</script>
+</body>
+</html>
